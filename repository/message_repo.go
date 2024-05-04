@@ -16,15 +16,13 @@ func (m MessageRepo) GetMessages() ([]model.Message, error) {
 	//TODO: get from database encrypted
 	message1 := model.Message{
 		ID:        1,
-		Message:   "hello",
-		UserId:    1,
+		Payload:   "hello",
 		Timestamp: time.Now(),
 	}
 
 	message2 := model.Message{
 		ID:        2,
-		Message:   "hello2",
-		UserId:    2,
+		Payload:   "hello",
 		Timestamp: time.Now(),
 	}
 
@@ -36,8 +34,7 @@ func (m MessageRepo) GetMessages() ([]model.Message, error) {
 func (m MessageRepo) CreateMessage() (model.Message, error) {
 	message1 := model.Message{
 		ID:        1,
-		Message:   "hello",
-		UserId:    1,
+		Payload:   "hello",
 		Timestamp: time.Now(),
 	}
 

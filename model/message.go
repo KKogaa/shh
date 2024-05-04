@@ -4,7 +4,6 @@ import "time"
 
 type Message struct {
 	ID        int       `json:"id"`
-	UserId    int       `json:"user_id"`
-	Message   string    `json:"message"`
+	Payload   string    `json:"payload"`
 	Timestamp time.Time `json:"timestamp"`
 }
