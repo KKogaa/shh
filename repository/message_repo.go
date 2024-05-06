@@ -1,42 +1,32 @@
 package repository
 
 import (
-	"time"
-
 	"github.com/KKogaa/shh/model"
+	"github.com/jmoiron/sqlx"
 )
 
-type MessageRepo struct{}
-
-func NewMessageRepo() MessageRepo {
-	return MessageRepo{}
+type MessageRepo struct {
+	db *sqlx.DB
 }
 
-func (m MessageRepo) GetMessages() ([]model.Message, error) {
-	//TODO: get from database encrypted
-	message1 := model.Message{
-		ID:        1,
-		Payload:   "hello",
-		Timestamp: time.Now(),
+func NewMessageRepo(db *sqlx.DB) MessageRepo {
+	return MessageRepo{
+		db: db,
 	}
+}
 
-	message2 := model.Message{
-		ID:        2,
-		Payload:   "hello",
-		Timestamp: time.Now(),
+func (m MessageRepo) GetMessagesByChatroom(chatroomId int) ([]model.Message, error) {
+	messages := []model.Message{}
+	err := m.db.Select(&messages, "select * from messages where chatroom_id = :chatroomId",
+		chatroomId)
+
+	if err != nil {
+		return messages, err
 	}
-
-	messages := []model.Message{message1, message2}
 
 	return messages, nil
 }
 
-func (m MessageRepo) CreateMessage() (model.Message, error) {
-	message1 := model.Message{
-		ID:        1,
-		Payload:   "hello",
-		Timestamp: time.Now(),
-	}
-
-	return message1, nil
+func (m MessageRepo) CreateMessageInChatroom(chatroomId int) (model.Message, error) {
+	return model.Message{}, nil
 }

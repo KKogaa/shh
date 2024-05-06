@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/KKogaa/shh/controller/rest"
 	"github.com/KKogaa/shh/controller/ws"
+	"github.com/KKogaa/shh/db"
 	"github.com/KKogaa/shh/repository"
 	"github.com/KKogaa/shh/service"
 	"github.com/labstack/echo/v4"
@@ -10,16 +11,22 @@ import (
 )
 
 func Routes(e *echo.Echo) {
+	db := db.CreateDB()
+
 	messageWS := ws.NewMessageWS()
-	// e.Static("/", "./index.html")
 	e.GET("/ws", messageWS.GetMessages)
 
-	//WIRING
-	messageRepo := repository.NewMessageRepo()
-	messageService := service.NewMessageService(messageRepo)
+	messageRepo := repository.NewMessageRepo(db)
+	chatroomRepo := repository.NewChatroomRepo(db)
+	messageService := service.NewMessageService(messageRepo, chatroomRepo)
 	messages := rest.NewMessagesREST(messageService)
-	e.GET("/messages", messages.ListMessages)
+
+	chatroomService := service.NewChatroomService(chatroomRepo)
+	chatrooms := rest.NewChatroomsREST(chatroomService)
+
+	e.GET("/messages/chatrooms/:chatroomName", messages.ListMessages)
 	e.POST("/messages", messages.CreateMessage)
+	e.POST("/chatrooms/:chatroomName", chatrooms.CreateChatroom)
 }
 
 func main() {

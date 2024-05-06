@@ -75,20 +75,16 @@ func (m MessageWS) GetMessages(c echo.Context) error {
 			return true // Allow any origin for WebSocket connection
 		},
 	}
-	log.Println("new client connected")
 
-	// Upgrade HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		c.Logger().Error(err)
 		return err
 	}
-	// defer conn.Close()
+	defer conn.Close()
 
 	m.clients.add(conn)
-	// defer clients.remove(conn)
-
-	log.Printf("connected clients: %d", len(m.clients.clients))
+	defer m.clients.remove(conn)
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -103,15 +99,12 @@ func (m MessageWS) GetMessages(c echo.Context) error {
 			return err
 		}
 
+		//TODO: for every message that is read here persist in database
+
 		jsonMsg, err := json.Marshal(decodedMsg)
 		if err != nil {
 			return err
 		}
-
-		// err = m.SendMessage(conn, jsonMsg)
-		// if err != nil {
-		// 	return err
-		// }
 
 		m.clients.broadcast(jsonMsg)
 	}

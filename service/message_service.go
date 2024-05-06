@@ -1,27 +1,33 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/KKogaa/shh/model"
 	"github.com/KKogaa/shh/port"
 )
 
 type MessageService struct {
-	MessageRepo port.MessagePort
+	MessageRepo  port.MessagePort
+	ChatroomRepo port.ChatroomPort
 }
 
-func NewMessageService(messageRepo port.MessagePort) MessageService {
+func NewMessageService(messageRepo port.MessagePort,
+	chatroomRepo port.ChatroomPort) MessageService {
 	return MessageService{
-		MessageRepo: messageRepo,
+		MessageRepo:  messageRepo,
+		ChatroomRepo: chatroomRepo,
 	}
 }
 
-func (m MessageService) ListMessages() ([]model.Message, error) {
+func (m MessageService) ListMessages(chatroomName string) ([]model.Message, error) {
 
-	messages, err := m.MessageRepo.GetMessages()
+	chatroom, err := m.ChatroomRepo.GetChatroomByName(chatroomName)
 	if err != nil {
-		return nil, fmt.Errorf("error obtaining messages: %s", err)
+		return nil, err
+	}
+
+	messages, err := m.MessageRepo.GetMessagesByChatroom(chatroom.ID)
+	if err != nil {
+		return nil, err
 	}
 
 	return messages, nil
