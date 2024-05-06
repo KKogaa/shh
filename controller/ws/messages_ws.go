@@ -25,35 +25,6 @@ func NewMessageWS() MessageWS {
 	}
 }
 
-type ConnectedClients struct {
-	clients map[*websocket.Conn]bool
-	mutex   sync.Mutex
-}
-
-func (m *ConnectedClients) add(conn *websocket.Conn) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	m.clients[conn] = true
-}
-
-func (m *ConnectedClients) remove(conn *websocket.Conn) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	delete(m.clients, conn)
-}
-
-func (m *ConnectedClients) broadcast(message []byte) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	log.Printf("connected clients: %d", len(m.clients))
-	for conn := range m.clients {
-		err := conn.WriteMessage(websocket.TextMessage, message)
-		if err != nil {
-			log.Println("Error sending message to client:", err)
-		}
-	}
-}
-
 func (m MessageWS) SendMessage(conn *websocket.Conn, message []byte) error {
 	err := conn.WriteMessage(websocket.TextMessage, message)
 	if err != nil {
@@ -62,17 +33,12 @@ func (m MessageWS) SendMessage(conn *websocket.Conn, message []byte) error {
 	return nil
 }
 
-type Message struct {
-	Msg  string `json:"msg"`
-	User string `json:"user"`
-}
-
 func (m MessageWS) GetMessages(c echo.Context) error {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			return true // Allow any origin for WebSocket connection
+			return true
 		},
 	}
 
@@ -100,6 +66,7 @@ func (m MessageWS) GetMessages(c echo.Context) error {
 		}
 
 		//TODO: for every message that is read here persist in database
+		//TODO: map request message to persistance message
 
 		jsonMsg, err := json.Marshal(decodedMsg)
 		if err != nil {
