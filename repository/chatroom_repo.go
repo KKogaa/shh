@@ -42,10 +42,17 @@ func (c ChatroomRepo) CreateChatroom(name string) (model.Chatroom, error) {
     insert into chatrooms (chatroom) values (:chatroom) returning id
   `
 
-	_, err := c.db.Exec(sql, chatroom.Chatroom)
+	result, err := c.db.Exec(sql, chatroom.Chatroom)
 	if err != nil {
 		return chatroom, fmt.Errorf("error executing sql insert chatrooms %s", err)
 	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return chatroom, fmt.Errorf("error obtaining id in chatrooms %s", err)
+	}
+
+	chatroom.ID = id
 
 	return chatroom, nil
 }

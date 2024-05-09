@@ -17,6 +17,15 @@ func NewChatroomService(chatroomRepo port.ChatroomPort) ChatroomService {
 	}
 }
 
+func (c ChatroomService) GetChatroomByName(name string) (model.Chatroom, error) {
+	existingChatroom, err := c.ChatroomRepo.GetChatroomByName(name)
+	if err != nil {
+		return model.Chatroom{}, err
+	}
+
+	return existingChatroom, nil
+}
+
 func (c ChatroomService) CreateChatroom(name string) (model.Chatroom, error) {
 	existingChatroom, err := c.ChatroomRepo.GetChatroomByName(name)
 	if err != nil {

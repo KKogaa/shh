@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/KKogaa/shh/model"
 	"github.com/jmoiron/sqlx"
 )
@@ -15,7 +17,7 @@ func NewMessageRepo(db *sqlx.DB) MessageRepo {
 	}
 }
 
-func (m MessageRepo) GetMessagesByChatroom(chatroomId int) ([]model.Message, error) {
+func (m MessageRepo) GetMessagesByChatroom(chatroomId int64) ([]model.Message, error) {
 	messages := []model.Message{}
 	err := m.db.Select(&messages, "select * from messages where chatroom_id = :chatroomId",
 		chatroomId)
@@ -27,6 +29,24 @@ func (m MessageRepo) GetMessagesByChatroom(chatroomId int) ([]model.Message, err
 	return messages, nil
 }
 
-func (m MessageRepo) CreateMessageInChatroom(chatroomId int) (model.Message, error) {
-	return model.Message{}, nil
+func (m MessageRepo) CreateMessageInChatroom(chatroomId int64,
+	message model.Message) (model.Message, error) {
+
+	sql := ` insert into messages (username, chatroom_id, payload, created_at) 
+  values ($1, $2, $3, $4) `
+	result, err := m.db.Exec(sql, message.Username, chatroomId, message.Payload,
+		message.CreatedAt)
+
+	if err != nil {
+		return message, fmt.Errorf("error executing sql insert messages %s", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return message, fmt.Errorf("error getting id from messages %s", err)
+	}
+
+	message.ID = id
+
+	return message, nil
 }

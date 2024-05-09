@@ -4,24 +4,24 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
 
+	"github.com/KKogaa/shh/service"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 )
 
 type MessageWS struct {
-	clients *ConnectedClients
+	chatroomService service.ChatroomService
+	messageService  service.MessageService
+	chatrooms       *Chatrooms
 }
 
-func NewMessageWS() MessageWS {
-
-	clients := ConnectedClients{
-		clients: make(map[*websocket.Conn]bool),
-		mutex:   sync.Mutex{},
-	}
+func NewMessageWS(chatroomService service.ChatroomService,
+	messageService service.MessageService) MessageWS {
 	return MessageWS{
-		clients: &clients,
+		chatrooms:       NewChatrooms(),
+		chatroomService: chatroomService,
+		messageService:  messageService,
 	}
 }
 
@@ -49,8 +49,9 @@ func (m MessageWS) GetMessages(c echo.Context) error {
 	}
 	defer conn.Close()
 
-	m.clients.add(conn)
-	defer m.clients.remove(conn)
+	m.chatrooms.AddNewConnection(conn)
+
+	defer m.chatrooms.RemoveConnection(conn)
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -65,14 +66,28 @@ func (m MessageWS) GetMessages(c echo.Context) error {
 			return err
 		}
 
-		//TODO: for every message that is read here persist in database
-		//TODO: map request message to persistance message
+		//TODO: refactor this
+		if !m.chatrooms.Exists(decodedMsg.Chatroom) {
+			m.chatrooms.InitializeChatroom(decodedMsg.Chatroom)
+			m.chatroomService.CreateChatroom(decodedMsg.Chatroom)
+		}
 
-		jsonMsg, err := json.Marshal(decodedMsg)
+		m.chatrooms.AddNewConnectionToChatroom(decodedMsg.Chatroom, conn)
+
+		chatroom, err := m.chatroomService.GetChatroomByName(decodedMsg.Chatroom)
+		if err != nil {
+			return err
+		}
+		_, err = m.messageService.CreateMessage(chatroom.ID,
+			decodedMsg.Msg, decodedMsg.User)
+
 		if err != nil {
 			return err
 		}
 
-		m.clients.broadcast(jsonMsg)
+		err = m.chatrooms.Broadcast(decodedMsg.Chatroom, decodedMsg)
+		if err != nil {
+			return err
+		}
 	}
 }

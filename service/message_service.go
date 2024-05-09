@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/KKogaa/shh/model"
 	"github.com/KKogaa/shh/port"
 )
@@ -31,4 +33,22 @@ func (m MessageService) ListMessages(chatroomName string) ([]model.Message, erro
 	}
 
 	return messages, nil
+}
+
+func (m MessageService) CreateMessage(chatroomId int64,
+	payload string, username string) (model.Message, error) {
+
+	message := model.Message{
+		Payload:    payload,
+		Username:   username,
+		CreatedAt:  time.Now(),
+		ChatroomId: chatroomId,
+	}
+
+	message, err := m.MessageRepo.CreateMessageInChatroom(message.ChatroomId, message)
+	if err != nil {
+		return message, err
+	}
+
+	return message, nil
 }

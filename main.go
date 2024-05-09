@@ -13,9 +13,6 @@ import (
 func Routes(e *echo.Echo) {
 	db := db.CreateDB()
 
-	messageWS := ws.NewMessageWS()
-	e.GET("/ws", messageWS.GetMessages)
-
 	messageRepo := repository.NewMessageRepo(db)
 	chatroomRepo := repository.NewChatroomRepo(db)
 	messageService := service.NewMessageService(messageRepo, chatroomRepo)
@@ -23,6 +20,9 @@ func Routes(e *echo.Echo) {
 
 	chatroomService := service.NewChatroomService(chatroomRepo)
 	chatrooms := rest.NewChatroomsREST(chatroomService)
+
+	messageWS := ws.NewMessageWS(chatroomService, messageService)
+	e.GET("/ws", messageWS.GetMessages)
 
 	e.GET("/messages/chatrooms/:chatroomName", messages.ListMessages)
 	e.POST("/messages", messages.CreateMessage)
